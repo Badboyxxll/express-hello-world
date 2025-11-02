@@ -1,16 +1,33 @@
-{
-  "name": "express-hello-world",
-  "version": "1.0.0",
-  "description": "Express Hello World on Render",
-  "main": "app.js",
-  "repository": "https://github.com/render-examples/express-hello-world",
-  "author": "Render Developers",
-  "license": "MIT",
-  "private": false,
-  "scripts": {
-    "start": "node app.js"
-  },
-  "dependencies": {
-    "express": "^5.0.0"
+import express from "express";
+import fetch from "node-fetch";
+
+const app = express();
+app.use(express.json());
+
+// ✅ Your actual n8n webhook URL
+const N8N_WEBHOOK_URL = "https://badboyxxl.app.n8n.cloud/webhook-test/test_n8n";
+
+// ✅ Default route to confirm app is running
+app.get("/", (req, res) => {
+  res.send("✅ Render Server is Live! Use POST /api/test_n8n to send data.");
+});
+
+// ✅ The route that sends to n8n
+app.post("/api/test_n8n", async (req, res) => {
+  try {
+    const response = await fetch(N8N_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req.body),
+    });
+
+    const data = await response.text();
+    res.status(200).json({ success: true, response: data });
+  } catch (error) {
+    console.error("❌ Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
-}
+});
+
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
